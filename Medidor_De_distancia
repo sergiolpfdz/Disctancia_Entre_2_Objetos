@@ -1,0 +1,92 @@
+importar  cv2
+importar  numpy  como  np
+importar  imutils
+
+def  ordenar_puntos ( puntos ):
+	n_puntos  =  np . concatenar ([ puntos [ 0 ], puntos [ 1 ], puntos [ 2 ], puntos [ 3 ]]). tolista ()
+
+	y_order  =  ordenado ( n_puntos , key = lambda  n_puntos : n_puntos [ 1 ])
+
+	pedido_x1  =  pedido_y [: 2 ]
+	x1_order  =  sorted ( x1_order , key = lambda  x1_order : x1_order [ 0 ])
+
+	x2_order  =  y_order [ 2 : 4 ]
+	x2_order  =  sorted ( x2_order , clave = lambda  x2_order : x2_order [ 0 ])
+	
+	volver [ x1_order [ 0 ], x1_order [ 1 ], x2_order [ 0 ], x2_order [ 1 ]]
+
+def  roi ( imagen , ancho , alto ):
+	imagen_alineada  =  Ninguno
+
+	gris  =  cv2 . cvtColor ( imagen , cv2 . COLOR_BGR2GRAY )
+	_ , th  =  cv2 . umbral ( gris , 150 , 255 , cv2 . THRESH_BINARY )
+	 centavos =  cv2 . findContours ( th , cv2 . RETR_EXTERNAL , cv2 . CHAIN_APPROX_SIMPLE )[ 0 ]
+	cnts  =  ordenado ( cnts , clave = cv2 . contourArea , reverse = True )[: 1 ]
+
+	para  c  en  centavos :
+		épsilon  =  0.01 * cv2 . longitud de arco ( c , Verdadero )
+		aprox  =  cv2 . aproxPolyDP ( c , épsilon , Verdadero )
+		
+		si  len ( aprox. ) ==  4 :
+			puntos  =  ordenar_puntos ( aprox )			
+			pts1  =  np . float32 ( puntos )
+			pts2  =  np . float32 ([[ 0 , 0 ], [ ancho , 0 ], [ 0 , alto ], [ ancho , alto ]])
+			M  =  CV2 . getPerspectiveTransform ( pts1 , pts2 )
+			imagen_alineada  =  cv2 . warpPerspective ( imagen , M , ( ancho , alto ))
+
+	volver  imagen_alineada
+
+
+gorra  =  cv2 . Captura de video ( 0 , cv2 . CAP_DSHOW )
+#cap = cv2.VideoCapture('diezcm.mp4')
+
+mientras que  es cierto :
+
+	ret , marco  =  gorra . leer ()
+	
+	si  ret  ==  Falso : romper
+	#marco = imutils.resize(marco, ancho=1080)
+	imagen_A4  =  roi ( marco , ancho = 720 , alto = 509 )
+
+	si  imagen_A4  no es  Ninguno : 
+		puntos  = []
+		imagenHSV  =  cv2 . cvtColor ( imagen_A4 , cv2 . COLOR_BGR2HSV )
+		verdebajo  =  np . matriz ([ 36 , 14 , 0 ], np . uint8 )
+		verdeAlto  =  np . matriz ([ 56 , 120 , 255 ], np . uint8 )
+		máscaraVerde  =  cv2 . inRange ( imagenHSV , verdeBajo , verdeAlto )
+
+		 centavos =  cv2 . findContours ( máscaraVerde , cv2 . RETR_EXTERNAL , cv2 . CHAIN_APPROX_SIMPLE )[ 0 ]
+		cnts  =  ordenado ( cnts , clave = cv2 . contourArea , reverse = True )[: 2 ]
+
+		para  c  en  centavos :
+			X , y , w , h  =  cv2 . Recto delimitador ( c )
+			cv2 . rectángulo ( imagen_A4 , ( x , y ), ( x + a , y + h ), ( 255 , 0 , 0 ), 2 )
+			puntos _ añadir ([ x , y , w , h ])
+
+		si  len ( puntos ) ==  2 :
+			x1 , y1 , w1 , h1  =  puntos [ 0 ]
+			x2 , y2 , w2 , h2  =  puntos [ 1 ]
+			
+			si  x1  <  x2 :
+				distancia_pixeles  =  abs ( x2  - ( x1 + w1 ))
+				distancia_cm  = ( distancia_pixeles * 29.7 ) / 720
+				cv2 . putText ( imagen_A4 , "{:.2f} cm" . formato ( distancia_cm ), ( x1 + w1 + distancia_pixeles // 2 , y1 - 30 ), 2 , 0.8 , ( 0 , 0 , 255 ), 1 , cv2 . LINE_AA )
+				cv2 . línea ( imagen_A4 ,( x1 + w1 , y1 - 20 ),( x2 , y1 - 20 ),( 0 , 0 , 255 ), 2 )
+				cv2 . línea ( imagen_A4 ,( x1 + w1 , y1 - 30 ),( x1 + w1 , y1 - 10 ),( 0 , 0 , 255 ), 2 )
+				cv2 . línea ( imagen_A4 ,( x2 , y1 - 30 ),( x2 , y1 - 10 ),( 0 , 0 , 255 ), 2 )
+			más :
+				distancia_pixeles  =  abs ( x1  - ( x2 + w2 ))
+				distancia_cm  = ( distancia_pixeles * 29.7 ) / 720
+				cv2 . putText ( imagen_A4 , "{:.2f} cm" . formato ( distancia_cm ), ( x2 + w2 + distancia_pixeles // 2 , y2 - 30 ), 2 , 0.8 , ( 0 , 0 , 255 ), 1 , cv2 . LINE_AA )
+				cv2 . línea ( imagen_A4 ,( x2 + w2 , y2 - 20 ),( x1 , y2 - 20 ),( 0 , 0 , 255 ), 2 )
+				cv2 . línea ( imagen_A4 ,( x2 + w2 , y2 - 30 ),( x2 + w2 , y2 - 10 ),( 0 , 0 , 255 ), 2 )
+				cv2 . línea ( imagen_A4 ,( x1 , y2 - 30 ),( x1 , y2 - 10 ),( 0 , 0 , 255 ), 2 )
+
+		cv2 . imshow ( 'imagen_A4' , imagen_A4 )
+
+	cv2 . imshow ( 'marco' , marco )	
+	k  =  cv2 . tecla de espera ( 1 ) y  0xFF
+	si  k  ==  27 :
+		romper
+gorra _ liberar ()
+cv2 . destruir todas las ventanas ()
